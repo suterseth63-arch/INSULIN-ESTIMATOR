@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-12">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Carbohydrate & Insulin Estimator</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 650px; margin: 30px auto; padding: 20px; background-color: #f8fafc; color: #1e293b; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 20px; }
+        h2, h3 { margin-top: 0; color: #0f172a; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95rem; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; }
+        .grid { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 15px; }
+        button { background-color: #2563eb; color: white; border: none; padding: 11px 16px; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f1f5f9; font-weight: 600; }
+        .summary-box { background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 15px; border-radius: 6px; margin-top: 20px; }
+        .disclaimer-box { font-size: 0.85rem; color: #64748b; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; margin-top: 25px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🥣 Meal Carbohydrate Counter</h2>
+        <p style="color: #64748b; margin-top: -10px; font-size: 0.95rem;">Select items or add custom foods to tally your meal's total carbohydrates.</p>
+        
+        <!-- Food Input Fields -->
+        <div class="grid">
+            <div>
+                <label for="foodSelect">Common Foods</label>
+                <select id="foodSelect" onchange="populateCarbValue()">
+                    <option value="" data-carbs="0">-- Choose an item or type custom --</option>
+                    <option value="Apple (1 medium)" data-carbs="25">Apple (1 medium) - 25g carbs</option>
+                    <option value="Banana (1 medium)" data-carbs="27">Banana (1 medium) - 27g carbs</option>
+                    <option value="White Rice (1 cup cooked)" data-carbs="45">White Rice (1 cup) - 45g carbs</option>
+                    <option value="Brown Rice (1 cup cooked)" data-carbs="45">Brown Rice (1 cup) - 45g carbs</option>
+                    <option value="Slice of White Bread" data-carbs="15">Slice of White Bread - 15g carbs</option>
+                    <option value="Slice of Whole Wheat Bread" data-carbs="12">Whole Wheat Bread - 12g carbs</option>
+                    <option value="Oatmeal (1 cup cooked)" data-carbs="28">Oatmeal (1 cup) - 28g carbs</option>
+                    <option value="Glass of Milk (250ml)" data-carbs="12">Milk (250ml) - 12g carbs</option>
+                    <option value="githeri ( 1 serving spoon  )" data-carbs="2.5">githeri (1 serving spoon) - 2.5g carbs</option>
+                    <option value="soda ( 1 bottle 500g  )" data-carbs="48">soda (1 boda 500g) - 48g carbs</option> 
+                </select>
+            </div>
+            <div>
+                <label for="customCarbs">Carbs (grams)</label>
+                <input type="number" id="customCarbs" min="0" placeholder="e.g., 15">
+            </div>
+            <div>
+                <button type="button" onclick="addFoodItem()">Add to Meal</button>
+            </div>
+        </div>
+
+        <!-- Current Meal Log -->
+        <h3>Current Meal Items</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Food Item</th>
+                    <th>Carbohydrates</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="mealTableBody">
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #94a3b8;">No food items added yet.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>💉 Optional Insulin Estimator</h3>
+        <div class="form-group">
+            <label for="icr">Your Insulin-to-Carbohydrate Ratio (ICR):</label>
+            <p style="color: #64748b; margin: -4px 0 8px 0; font-size: 0.85rem;">The amount of carbohydrates covered by 1 unit of rapid-acting insulin (e.g., 1 unit per 10g of carbs).</p>
+            <input type="number" id="icr" value="10" min="1" max="100" oninput="calculateTotals()" style="max-width: 150px;">
+            <span style="font-weight: 500; margin-left: 5px;"> grams per unit</span>
+        </div>
+
+        <!-- Dynamic Output Summaries -->
+        <div class="summary-box">
+            <div style="font-size: 1.1rem; margin-bottom: 5px;"><strong>Total Meal Carbohydrates:</strong> <span id="totalCarbsDisplay">0</span> grams</div>
+            <div style="font-size: 1.1rem; color: #1e3a8a;"><strong>Estimated Meal Insulin Dose:</strong> <span id="insulinDoseDisplay">0.0</span> units</div>
+        </div>
+
+        <div class="disclaimer-box">
+            <strong>⚠️ Medical Disclaimer:</strong> This tool provides structural arithmetic estimations based on values you input. It does not replace medical advice, precise logging, or customized clinical plans provided by a healthcare professional. Always consult your doctor to confirm your specific insulin ratios and clinical thresholds.
+        </div>
+    </div>
+
+    <script>
+        let mealItems = [];
+
+        function populateCarbValue() {
+            const select = document.getElementById('foodSelect');
+            const selectedOption = select.options[select.selectedIndex];
+            const carbs = selectedOption.getAttribute('data-carbs');
+            if (carbs && carbs > 0) {
+                document.getElementById('customCarbs').value = carbs;
+            }
+        }
+
+        function addFoodItem() {
+            const select = document.getElementById('foodSelect');
+            const customCarbsInput = document.getElementById('customCarbs');
+            
+            let name = select.value;
+            let carbs = parseInt(customCarbsInput.value);
+
+            if (!name && carbs > 0) {
+                name = "Custom Item";
+            } else if (!carbs || carbs < 0) {
+                alert("Please enter a valid carbohydrate amount.");
+                return;
+            }
+
+            mealItems.push({ name: name, carbs: carbs });
+            
+            // Reset inputs
+            select.selectedIndex = 0;
+            customCarbsInput.value = '';
+            
+            updateMealTable();
+            calculateTotals();
+        }
+
+        function removeFoodItem(index) {
+            mealItems.splice(index, 1);
+            updateMealTable();
+            calculateTotals();
+        }
+
+        function updateMealTable() {
+            const tbody = document.getElementById('mealTableBody');
+            if (mealItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #94a3b8;">No food items added yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            mealItems.forEach((item, index) => {
+                const row = `<tr>
+                    <td>${item.name}</td>
+                    <td>${item.carbs}g</td>
+                    <td><button class="btn-danger" style="padding: 5px 10px; font-size: 0.85rem;" onclick="removeFoodItem(${index})">Remove</button></td>
+                </tr>`;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        function calculateTotals() {
+            let totalCarbs = 0;
+            mealItems.forEach(item => totalCarbs += item.carbs);
+            document.getElementById('totalCarbsDisplay').innerText = totalCarbs;
+
+            const icrValue = parseFloat(document.getElementById('icr').value);
+            let insulinDose = 0;
+            
+            if (icrValue && icrValue > 0 && totalCarbs > 0) {
+                // Formula: Total Carbs / Insulin-to-Carb Ratio
+                insulinDose = totalCarbs / icrValue;
+            }
+
+            // Display dose rounded to 1 decimal place (standard for many insulin pens/pumps)
+            document.getElementById('insulinDoseDisplay').innerText = insulinDose.toFixed(1);
+        }
+    </script>
+<!-- Place this inside the body, right under the Meal Counter card -->
+<div class="card">
+  <h3>🎯 Blood Glucose Correction & Active Insulin</h3>
+  <div class="grid-3-col" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+    <div>
+      <label for="currentBg">Current Blood Glucose</label>
+      <input type="number" id="currentBg" placeholder="e.g., 180" oninput="calculateTotals()">
+    </div>
+    <div>
+      <label for="targetBg">Target Blood Glucose</label>
+      <input type="number" id="targetBg" value="100" oninput="calculateTotals()">
+    </div>
+    <div>
+      <label for="isf">Sensitivity Factor (ISF)</label>
+      <input type="number" id="isf" value="50" oninput="calculateTotals()">
+    </div>
+  </div>
+  
+  <div class="form-group">
+    <label for="iob">Insulin on Board (IOB / Active Insulin):</label>
+    <input type="number" id="iob" value="0" min="0" step="0.1" oninput="calculateTotals()" style="max-width: 150px;">
+    <span style="font-weight: 500; margin-left: 5px;"> units remaining</span>
+  </div>
+</div>
+
+</body>
+</html>
